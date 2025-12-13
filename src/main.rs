@@ -42,8 +42,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             get(api::handler::list_users).post(api::handler::create_user),
         )
         .route(
-            "/api/users/:id",
-            get(api::handler::get_user).post(api::handler::delete_user),
+            "/api/users/{id}",
+            get(api::handler::get_user).delete(api::handler::delete_user),
         )
         .layer(TraceLayer::new_for_http())
         .with_state(state);
