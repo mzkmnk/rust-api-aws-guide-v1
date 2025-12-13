@@ -18,12 +18,13 @@ mod infrastructure;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    dotenv::dotenv().ok();
+
     tracing_subscriber::registry()
         .with(tracing_subscriber::fmt::layer())
         .with(tracing_subscriber::EnvFilter::from_default_env())
         .init();
 
-    dotenv::dotenv().ok();
     let config = Config::from_env()?;
 
     tracing::info!("Starting server at {}", config.server_addr());
