@@ -6,48 +6,43 @@
 
 ## 1.1 本番環境構成
 
-```
-┌─────────────────────────────────────────┐
-│         AWS Cloud                        │
-├─────────────────────────────────────────┤
-│ ┌──────────────────────────────────────┐│
-│ │  Route 53 (DNS)                      ││
-│ │  api.example.com                     ││
-│ └────────────┬─────────────────────────┘│
-│              │                           │
-│ ┌────────────▼─────────────────────────┐│
-│ │  API Gateway (REST)                  ││
-│ │  - Authentication (API Key)           ││
-│ │  - Rate Limiting                      ││
-│ │  - CORS設定                           ││
-│ └────────────┬─────────────────────────┘│
-│              │                           │
-│ ┌────────────▼─────────────────────────┐│
-│ │ ECS Cluster (Fargate)                ││
-│ │ ┌────────────────────────────────────┤│
-│ │ │ Task Definition (Rust Binary)      ││
-│ │ │ - CPU: 256 (0.25 vCPU)             ││
-│ │ │ - Memory: 512 MB                   ││
-│ │ │ - ContainerPort: 3000               ││
-│ │ │ - Environment Variables: DB_URL     ││
-│ │ └────────────────────────────────────┤│
-│ │ ┌────────────────────────────────────┤│
-│ │ │ Desired Count: 2 (Auto Scaling)    ││
-│ │ └────────────────────────────────────┤│
-│ └────────────┬─────────────────────────┘│
-│              │                           │
-│ ┌────────────▼─────────────────────────┐│
-│ │  RDS (PostgreSQL 15)                 ││
-│ │ - Multi-AZ (本番要件)                 ││
-│ │ - Performance Insights有効            ││
-│ │ - Automated Backups (7日)             ││
-│ └──────────────────────────────────────┘│
-│ ┌──────────────────────────────────────┐│
-│ │  CloudWatch Logs                     ││
-│ │ - ECS Container Logs                 ││
-│ │ - Lambda Logs (必要に応じて)          ││
-│ └──────────────────────────────────────┘│
-└─────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph AWS["AWS Cloud"]
+        Route53["Route 53 (DNS)<br/>api.example.com"]
+        
+        subgraph APIGateway["API Gateway (REST)"]
+            Auth["Authentication (API Key)"]
+            RateLimit["Rate Limiting"]
+            CORS["CORS設定"]
+        end
+        
+        subgraph ECS["ECS Cluster (Fargate)"]
+            subgraph TaskDef["Task Definition (Rust Binary)"]
+                CPU["CPU: 256 (0.25 vCPU)"]
+                Memory["Memory: 512 MB"]
+                Port["ContainerPort: 3000"]
+                EnvVars["Environment Variables: DB_URL"]
+            end
+            AutoScale["Desired Count: 2 (Auto Scaling)"]
+        end
+        
+        subgraph RDS["RDS (PostgreSQL 15)"]
+            MultiAZ["Multi-AZ (本番要件)"]
+            PerfInsights["Performance Insights有効"]
+            Backups["Automated Backups (7日)"]
+        end
+        
+        subgraph CloudWatch["CloudWatch Logs"]
+            ECSLogs["ECS Container Logs"]
+            LambdaLogs["Lambda Logs (必要に応じて)"]
+        end
+    end
+
+    Route53 --> APIGateway
+    APIGateway --> ECS
+    ECS --> RDS
+    ECS -.-> CloudWatch
 ```
 
 ---
