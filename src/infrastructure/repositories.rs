@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use sqlx::{PgPool, Pool};
+use sqlx::PgPool;
 
 use crate::domain::user::User;
 

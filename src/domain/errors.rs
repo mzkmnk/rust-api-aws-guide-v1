@@ -6,6 +6,4 @@ pub enum DomainError {
     InvalidName,
     #[error("無効なメールアドレス形式です")]
     InvalidEmail,
-    #[error("ユーザが見つかりません: {0}")]
-    UserNotFound(i32),
 }
