@@ -1,4 +1,4 @@
-# Day 2: セッション 3 - AWS ECS/Fargate へのデプロイ（1 時間）
+# Day 2: セッション 3 - AWS ECS/Fargate へのデプロイ
 
 [← 前へ: セッション 2](./05-day2-session2-docker.md) | [概要](./00-overview.md)
 

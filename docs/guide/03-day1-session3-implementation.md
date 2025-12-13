@@ -1,4 +1,4 @@
-# Day 1: セッション 3 - 実装実演（1 時間 - AI モブプロ）
+# Day 1: セッション 3 - 実装実演
 
 [← 前へ: セッション 2](./02-day1-session2-architecture.md) | [概要](./00-overview.md)
 
@@ -28,9 +28,9 @@ cd user-api
 
 ---
 
-## 3.2 AI モブプロで実装する流れ
+## 3.2 実装の流れ
 
-### ステップ 1: main.rs のスケルトン（AI 補助）
+### ステップ 1: main.rs のスケルトン
 
 ```rust
 use axum::{routing::{get, post}, Router};
@@ -81,27 +81,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-### ステップ 2: AI に「handlers.rs を書いて」と依頼
+### ステップ 2: handlers.rs の実装
 
-```
-プロンプト例：
-"Axumを使ったRESTful APIのハンドラーを書いてください。
+Axum を使った RESTful API のハンドラーを実装します：
 - POST /api/users で CreateUserRequest を受け取り、User を返す
 - GET /api/users/:id で User を返す
 - エラーは ApiError に変換する
-エラーハンドリングはthiserrorを使用"
-```
+- エラーハンドリングは thiserror を使用
 
-### ステップ 3: AI に「エラー型を定義して」と依頼
+### ステップ 3: エラー型の定義
 
-```
-プロンプト例：
-"thiserror crateを使って以下のエラーを定義してください：
+thiserror crate を使って以下のエラーを定義します：
 - ValidationError
 - DatabaseError
 - NotFoundError
-- それぞれをHTTP StatusCodeに変換するIntoResponseを実装"
-```
+- それぞれを HTTP StatusCode に変換する IntoResponse を実装
 
 ### ステップ 4: データベーススキーマ作成
 

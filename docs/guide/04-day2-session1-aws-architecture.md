@@ -1,4 +1,4 @@
-# Day 2: セッション 1 - AWS アーキテクチャ設計（30 分）
+# Day 2: セッション 1 - AWS アーキテクチャ設計
 
 [← 前へ: Day1 セッション 3](./03-day1-session3-implementation.md) | [概要](./00-overview.md)
 

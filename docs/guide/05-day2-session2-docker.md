@@ -1,4 +1,4 @@
-# Day 2: セッション 2 - Docker コンテナ化（45 分 - AI モブプロ）
+# Day 2: セッション 2 - Docker コンテナ化
 
 [← 前へ: セッション 1](./04-day2-session1-aws-architecture.md) | [概要](./00-overview.md)
 

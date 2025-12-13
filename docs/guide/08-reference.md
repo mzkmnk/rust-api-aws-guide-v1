@@ -85,48 +85,6 @@ Self::Internal => (StatusCode::INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "Interna
 
 ---
 
-## 🎓 AIモブプロ活用ヒント
-
-### 効果的なプロンプト例
-
-**1. 構造体を定義する場合**
-```
-
-「ユーザーを表す Rust 構造体を定義してください。
-フィールド: id (u32), name (String), email (String), created_at (DateTime<Utc>)
-Serde, Debug, Clone deriv を付与
-DTO とドメインエンティティに分離したバージョンも作成」
-
-```
-
-**2. エラーハンドリング実装時**
-```
-
-「thiserror crate を使用して、以下のエラーを定義してください:
-
-- ValidationError(String)
-- DatabaseError(sqlx::Error)
-- NotFoundError
-- UnauthorizedError
-  それぞれを axum の IntoResponse に変換する実装も含める」
-
-```
-
-**3. データベースクエリ**
-```
-
-「SQLx を使ってユーザーを取得するクエリ関数を書いてください。
-
-- get_user_by_id(pool: &PgPool, id: u32) -> Result<User>
-- list_users(pool: &PgPool) -> Result<Vec<User>>
-  バッチ操作も考慮してください」
-
-```
-
-```
-
----
-
 ## 🚀 CI/CD パイプライン（GitHub Actions 例）
 
 ```yaml
@@ -198,13 +156,7 @@ jobs:
 - [AWS ECS Fargate ドキュメント](https://docs.aws.amazon.com/ja_jp/AmazonECS/latest/developerguide/what-is-amazon-ecs.html)
 - [AWS RDS PostgreSQL ベストプラクティス](https://docs.aws.amazon.com/ja_jp/AmazonRDS/latest/UserGuide/CHAP_PostgreSQL.html)
 
-**AI 支援開発**
-
-- Claude Code + Cursor IDE 推奨
-- factory.ai の Droid CLI との組み合わせ
-
 ---
 
 **作成日**: 2025 年 12 月 13 日  
-**推奨実施期間**: 2 日間（各日 2.5 時間）  
-**AI 支援**: Claude Code / Cursor IDE / Droid CLI
+**推奨実施期間**: 2 日間（各日 2.5 時間）
