@@ -1,8 +1,9 @@
 use serde::{Deserialize, Serialize};
+use sqlx::prelude::FromRow;
 
 use crate::domain::errors::DomainError;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct User {
     pub id: i32,
     pub name: String,
