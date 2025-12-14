@@ -4,72 +4,153 @@
 
 ---
 
-## 4.1 デプロイ確認コマンド
+## 4.1 スタック状態の確認
 
 ```bash
-# ECSサービスのステータス確認
+# 全スタックの状態確認
+aws cloudformation describe-stacks \
+  --query 'Stacks[?starts_with(StackName, `user-api`)].{Name:StackName,Status:StackStatus}' \
+  --output table \
+  --region ap-northeast-1
+
+# 特定スタックの詳細
+aws cloudformation describe-stack-events \
+  --stack-name user-api-ecs \
+  --query 'StackEvents[0:5].{Resource:LogicalResourceId,Status:ResourceStatus,Reason:ResourceStatusReason}' \
+  --output table \
+  --region ap-northeast-1
+```
+
+---
+
+## 4.2 ECS サービスの確認
+
+```bash
+# サービス状態
 aws ecs describe-services \
   --cluster user-api-cluster \
   --services user-api-service \
+  --query 'services[0].{Status:status,Running:runningCount,Desired:desiredCount}' \
+  --output table \
   --region ap-northeast-1
 
-# タスク一覧確認
-aws ecs list-tasks \
+# タスクの IP アドレス取得
+TASK_ARN=$(aws ecs list-tasks --cluster user-api-cluster --query 'taskArns[0]' --output text --region ap-northeast-1)
+
+aws ecs describe-tasks \
   --cluster user-api-cluster \
+  --tasks $TASK_ARN \
+  --query 'tasks[0].attachments[0].details[?name==`privateIPv4Address`].value' \
+  --output text \
   --region ap-northeast-1
+```
 
-# ログ確認
+---
+
+## 4.3 ログの確認
+
+```bash
+# 最新ログを表示
 aws logs tail /ecs/user-api --follow --region ap-northeast-1
 
-# CloudWatch メトリクス確認
-aws cloudwatch get-metric-statistics \
-  --namespace AWS/ECS \
-  --metric-name CPUUtilization \
-  --dimensions Name=ServiceName,Value=user-api-service \
-  --statistics Average \
-  --start-time 2025-12-13T00:00:00Z \
-  --end-time 2025-12-14T00:00:00Z \
-  --period 300 \
+# 直近 10 分のログ
+aws logs filter-log-events \
+  --log-group-name /ecs/user-api \
+  --start-time $(date -v-10M +%s000) \
+  --query 'events[].message' \
+  --output text \
   --region ap-northeast-1
 ```
 
 ---
 
-## 4.2 ヘルスチェック設定
+## 4.4 API 動作確認
 
 ```bash
-# ALB（Application Load Balancer）経由でのヘルスチェック
-# ヘルスチェック用エンドポイント追加（main.rs）
-app = app.route("/health", get(|| async { "OK" }))
+# タスクの Public IP を取得
+ENI_ID=$(aws ecs describe-tasks \
+  --cluster user-api-cluster \
+  --tasks $TASK_ARN \
+  --query 'tasks[0].attachments[0].details[?name==`networkInterfaceId`].value' \
+  --output text \
+  --region ap-northeast-1)
+
+PUBLIC_IP=$(aws ec2 describe-network-interfaces \
+  --network-interface-ids $ENI_ID \
+  --query 'NetworkInterfaces[0].Association.PublicIp' \
+  --output text \
+  --region ap-northeast-1)
+
+# ヘルスチェック
+curl http://$PUBLIC_IP:3000/health
+
+# ユーザー作成
+curl -X POST http://$PUBLIC_IP:3000/users \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Test User", "email": "test@example.com"}'
+
+# ユーザー一覧
+curl http://$PUBLIC_IP:3000/users
 ```
 
+---
+
+## 4.5 トラブルシューティング
+
+### スタック作成失敗時
+
 ```bash
-# ALB ターゲットグループ設定
-aws elbv2 create-target-group \
-  --name user-api-targets \
-  --protocol HTTP \
-  --port 3000 \
-  --vpc-id vpc-xxxxxxxx \
-  --health-check-path /health \
-  --health-check-interval-seconds 30 \
-  --health-check-timeout-seconds 5 \
-  --healthy-threshold-count 2 \
-  --unhealthy-threshold-count 2 \
+# エラー原因を確認
+aws cloudformation describe-stack-events \
+  --stack-name user-api-ecs \
+  --query 'StackEvents[?ResourceStatus==`CREATE_FAILED`].{Resource:LogicalResourceId,Reason:ResourceStatusReason}' \
+  --output table \
+  --region ap-northeast-1
+```
+
+### タスクが起動しない場合
+
+```bash
+# 停止理由を確認
+aws ecs describe-tasks \
+  --cluster user-api-cluster \
+  --tasks $TASK_ARN \
+  --query 'tasks[0].{Status:lastStatus,Reason:stoppedReason}' \
   --region ap-northeast-1
 ```
 
 ---
 
-## 4.3 本番運用チェックリスト
+## 4.6 リソースの削除
 
-- [ ] ECS タスクが両方起動している
+学習後は必ず削除してコストを抑えましょう。**逆順で削除**します。
+
+```bash
+# 1. ECS
+aws cloudformation delete-stack --stack-name user-api-ecs --region ap-northeast-1
+aws cloudformation wait stack-delete-complete --stack-name user-api-ecs --region ap-northeast-1
+
+# 2. Database
+aws cloudformation delete-stack --stack-name user-api-database --region ap-northeast-1
+aws cloudformation wait stack-delete-complete --stack-name user-api-database --region ap-northeast-1
+
+# 3. ECR（イメージがある場合は先に削除）
+aws ecr delete-repository --repository-name user-api --force --region ap-northeast-1
+aws cloudformation delete-stack --stack-name user-api-ecr --region ap-northeast-1
+
+# 4. Network
+aws cloudformation delete-stack --stack-name user-api-network --region ap-northeast-1
+```
+
+---
+
+## 4.7 本番運用チェックリスト
+
+- [ ] 全スタックが `CREATE_COMPLETE` 状態
+- [ ] ECS タスクが `RUNNING` 状態
 - [ ] CloudWatch Logs にエラーがない
-- [ ] RDS コネクション数が正常
-- [ ] API Gateway が正常に動作している
-- [ ] ヘルスチェック（/health）が通っている
-- [ ] 定期的なバックアップが有効
-- [ ] CloudWatch アラーム設定済み
-- [ ] 本番環境用の.env 設定完了
+- [ ] API エンドポイントが応答する
+- [ ] 学習後にリソースを削除した
 
 ---
 
