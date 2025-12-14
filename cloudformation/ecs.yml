@@ -1,0 +1,90 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: ECS Fargate for USER API
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: user-api
+  ImageTag:
+    Type: String
+    Default: latest
+  DBPassword:
+    Type: String
+    NoEcho: true
+
+Resources:
+  EcsCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub ${ProjectName}-cluster
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /ecs/${ProjectName}-log
+      RetentionInDays: 2
+
+  TaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+              Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub ${ProjectName}-task
+      NetworkMode: awsvpc
+      RequiresCompatibilities: [FARGATE]
+      Cpu: "256"
+      Memory: "512"
+      ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
+      ContainerDefinitions:
+        - Name: !Ref ProjectName
+          Image: !Sub
+            - ${RepositoryUri}:${ImageTag}
+            - RepositoryUri: !ImportValue
+                Fn::Sub: ${ProjectName}-RepositoryUri
+          PortMappings:
+            - ContainerPort: 3000
+          Environment:
+            - Name: DATABASE_URL
+              Value: !Sub
+                - postgresql://postgres:${DBPassword}@${RdsEndpoint}:5432/userdb
+                - RdsEndpoint: !ImportValue
+                    Fn::Sub: ${ProjectName}-RdsEndpoint
+            - Name: RUST_LOG
+              Value: info
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+
+  EcsService:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: !Sub ${ProjectName}-service
+      Cluster: !Ref EcsCluster
+    TaskDefinition: !Ref TaskDefinition
+    DesiredCount: 1
+    LaunchType: FARGATE
+    NetworkConfiguration:
+      AwsvpcConfiguration:
+        AssignPublicIp: ENABLED
+        Subnets:
+          - !ImportValue
+            Fn::Sub: ${ProjectName}-PublicSubnet1Id
+          - !ImportValue
+            Fn::Sub: ${ProjectName}-PublicSubnet2Id
+        SecurityGroups:
+          - !ImportValue
+            Fn::Sub: ${ProjectName}-EcsSecurityGroupId
