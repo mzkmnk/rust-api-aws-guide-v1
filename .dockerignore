@@ -1,0 +1,8 @@
+.git
+.gitignore
+target/
+.env
+.env.local
+.vscode
+.idea
+README.md
