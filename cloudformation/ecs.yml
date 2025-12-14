@@ -33,7 +33,7 @@ Resources:
           - Effect: Allow
             Principal:
               Service: ecs-tasks.amazonaws.com
-              Action: sts:AssumeRole
+            Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
 
@@ -74,17 +74,17 @@ Resources:
     Properties:
       ServiceName: !Sub ${ProjectName}-service
       Cluster: !Ref EcsCluster
-    TaskDefinition: !Ref TaskDefinition
-    DesiredCount: 1
-    LaunchType: FARGATE
-    NetworkConfiguration:
-      AwsvpcConfiguration:
-        AssignPublicIp: ENABLED
-        Subnets:
-          - !ImportValue
-            Fn::Sub: ${ProjectName}-PublicSubnet1Id
-          - !ImportValue
-            Fn::Sub: ${ProjectName}-PublicSubnet2Id
-        SecurityGroups:
-          - !ImportValue
-            Fn::Sub: ${ProjectName}-EcsSecurityGroupId
+      TaskDefinition: !Ref TaskDefinition
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !ImportValue
+              Fn::Sub: ${ProjectName}-PublicSubnet1Id
+            - !ImportValue
+              Fn::Sub: ${ProjectName}-PublicSubnet2Id
+          SecurityGroups:
+            - !ImportValue
+              Fn::Sub: ${ProjectName}-EcsSecurityGroupId
