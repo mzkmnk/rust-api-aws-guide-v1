@@ -18,12 +18,6 @@ Resources:
     Properties:
       ClusterName: !Sub ${ProjectName}-cluster
 
-  LogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub /ecs/${ProjectName}-log
-      RetentionInDays: 2
-
   TaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -36,6 +30,19 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Policies:
+        - PolicyName: ECSLogGroupCustomAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - logs:DescribeLogStreams
+                  - logs:PutRetentionPolicy
+                Resource: "arn:aws:logs:*:*:*"
 
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
@@ -65,9 +72,10 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Ref LogGroup
+              awslogs-group: !Sub /ecs/${ProjectName}-log
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: ecs
+              awslogs-create-group: "true"
 
   EcsService:
     Type: AWS::ECS::Service
