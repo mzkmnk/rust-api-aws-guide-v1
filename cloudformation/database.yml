@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: RDS PostgreSQL for User API
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: user-api
+  DBPassword:
+    Type: String
+    NoEcho: true
+    Description: Database master password
+
+Outputs:
+  RdsEndpoint:
+    Value: !GetAtt RdsInstance.Endpoint.Address
+    Export:
+      Name: !Sub ${ProjectName}-RdsEndpoint
+
+Resources:
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for RDS
+      SubnetIds:
+        - !ImportValue
+          Fn::Sub: ${ProjectName}-PublicSubnet1Id
+        - !ImportValue
+          Fn::Sub: ${ProjectName}-PublicSubnet2Id
+  
+  RdsInstance:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Delete
+    Properties:
+      DBInstanceIdentifier: !Sub ${ProjectName}-db
+      DBInstanceClass: db.t4g.micro
+      Engine: postgres
+      EngineVersion: '15'
+      MasterUsername: postgres
+      MasterUserPassword: !Ref DBPassword
+      DBName: userdb
+      AllocatedStorage: 20
+      StorageType: gp2
+      PubliclyAccessible: false
+      VPCSecurityGroups:
+        - !ImportValue
+          Fn::Sub: ${ProjectName}-RdsSecurityGroupId
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      BackupRetentionPeriod: 0
