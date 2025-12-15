@@ -27,6 +27,10 @@ Outputs:
     Value: !Ref PrivateSubnet2
     Export:
       Name: !Sub ${ProjectName}-PrivateSubnet2Id
+  AlbSecurityGroup:
+    Value: !Ref AlbSecurityGroup
+    Export:
+      Name: !Sub ${ProjectName}-AlbSecurityGroupId
   EcsSecurityGroupId:
     Value: !Ref EcsSecurityGroup
     Export:
@@ -153,14 +157,14 @@ Resources:
     DependsOn: AttachGateway
     Properties:
       Domain: vpc
-  
+
   # NAT Gateway
   NatGateway:
     Type: AWS::EC2::NatGateway
     Properties:
       AllocationId: !GetAtt NatGatewayEIP.AllocationId
       SubnetId: !Ref PublicSubnet1
-  
+
   # Private Route via NAT Gateway
   PrivateRoute:
     Type: AWS::EC2::Route
@@ -168,6 +172,18 @@ Resources:
       RouteTableId: !Ref PrivateRouteTable
       DestinationCidrBlock: 0.0.0.0/0
       NatGatewayId: !Ref NatGateway
+
+  # Security Group for ALB
+  AlbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow traffic from internet to ALB
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
 
   # Security Group for ECS (port 3000)
   EcsSecurityGroup:
@@ -179,7 +195,7 @@ Resources:
         - IpProtocol: tcp
           FromPort: 3000
           ToPort: 3000
-          CidrIp: 0.0.0.0/0
+          SourceSecurityGroupId: !Ref AlbSecurityGroup
 
   # Security Group for RDS (only from ECS)
   RdsSecurityGroup:
