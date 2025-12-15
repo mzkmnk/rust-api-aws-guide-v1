@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Description: Network resources for User API
 
 Parameters:
@@ -19,6 +19,14 @@ Outputs:
     Value: !Ref PublicSubnet2
     Export:
       Name: !Sub ${ProjectName}-PublicSubnet2Id
+  PrivateSubnet1Id:
+    Value: !Ref PrivateSubnet1
+    Export:
+      Name: !Sub ${ProjectName}-PrivateSubnet1Id
+  PrivateSubnet2Id:
+    Value: !Ref PrivateSubnet2
+    Export:
+      Name: !Sub ${ProjectName}-PrivateSubnet2Id
   EcsSecurityGroupId:
     Value: !Ref EcsSecurityGroup
     Export:
@@ -37,13 +45,13 @@ Resources:
       EnableDnsHostnames: true
       EnableDnsSupport: true
       Tags:
-      - Key: Name
-        Value: !Sub ${ProjectName}-vpc
+        - Key: Name
+          Value: !Sub ${ProjectName}-vpc
 
   # Internet Gateway
   InternetGateway:
     Type: AWS::EC2::InternetGateway
-  
+
   AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
@@ -56,29 +64,51 @@ Resources:
     Properties:
       VpcId: !Ref VPC
       CidrBlock: 10.0.1.0/24
-      AvailabilityZone: !Select [ 0, !GetAZs '']
+      AvailabilityZone: !Select [0, !GetAZs ""]
       MapPublicIpOnLaunch: true
       Tags:
-      - Key: Name
-        Value: !Sub ${ProjectName}-public-1
+        - Key: Name
+          Value: !Sub ${ProjectName}-public-1
 
   PublicSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
       CidrBlock: 10.0.2.0/24
-      AvailabilityZone: !Select [ 1, !GetAZs '']
+      AvailabilityZone: !Select [1, !GetAZs ""]
       MapPublicIpOnLaunch: true
       Tags:
-      - Key: Name
-        Value: !Sub ${ProjectName}-public-2
-  
-  # Route Table
+        - Key: Name
+          Value: !Sub ${ProjectName}-public-2
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.3.0/24
+      MapPublicIpOnLaunch: false
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-private-1
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.4.0/24
+      MapPublicIpOnLaunch: false
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-private-2
+
+  # Public Route Table
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
-  
+
   PublicRoute:
     Type: AWS::EC2::Route
     DependsOn: AttachGateway
@@ -98,6 +128,46 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnet2
       RouteTableId: !Ref PublicRouteTable
+
+  # Private Route Table
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+
+  PrivateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable
+
+  PrivateSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable
+
+  # Elastic IP for Nat Gateway
+  NatGatewayEIP:
+    Type: AWS::EC2::EIP
+    DependsOn: AttachGateway
+    Properties:
+      Domain: vpc
+  
+  # NAT Gateway
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGatewayEIP.AllocationId
+      SubnetId: !Ref PublicSubnet1
+  
+  # Private Route via NAT Gateway
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
 
   # Security Group for ECS (port 3000)
   EcsSecurityGroup:
