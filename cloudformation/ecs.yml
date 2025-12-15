@@ -96,3 +96,8 @@ Resources:
           SecurityGroups:
             - !ImportValue
               Fn::Sub: ${ProjectName}-EcsSecurityGroupId
+      LoadBalancers:
+        - ContainerName: !Ref ProjectName
+          ContainerPort: 3000
+          TargetGroupArn: !ImportValue
+            Fn::Sub: ${ProjectName}-TargetGroupArn
