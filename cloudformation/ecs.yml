@@ -87,12 +87,12 @@ Resources:
       LaunchType: FARGATE
       NetworkConfiguration:
         AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
+          AssignPublicIp: DISABLED
           Subnets:
             - !ImportValue
-              Fn::Sub: ${ProjectName}-PublicSubnet1Id
+              Fn::Sub: ${ProjectName}-PrivateSubnet1Id
             - !ImportValue
-              Fn::Sub: ${ProjectName}-PublicSubnet2Id
+              Fn::Sub: ${ProjectName}-PrivateSubnet2Id
           SecurityGroups:
             - !ImportValue
               Fn::Sub: ${ProjectName}-EcsSecurityGroupId

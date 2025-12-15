@@ -23,9 +23,9 @@ Resources:
       DBSubnetGroupDescription: Subnet group for RDS
       SubnetIds:
         - !ImportValue
-          Fn::Sub: ${ProjectName}-PublicSubnet1Id
+          Fn::Sub: ${ProjectName}-PrivateSubnet1Id
         - !ImportValue
-          Fn::Sub: ${ProjectName}-PublicSubnet2Id
+          Fn::Sub: ${ProjectName}-PrivateSubnet2Id
   
   RdsInstance:
     Type: AWS::RDS::DBInstance
