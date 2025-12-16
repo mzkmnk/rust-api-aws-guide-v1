@@ -32,6 +32,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let pool = create_pool(&config.database_url).await?;
     tracing::info!("Database connected");
 
+    sqlx::migrate!("./migrations").run(&pool).await?;
+
     let user_repo = Arc::new(PostgresUserRepository::new(pool));
     let user_service = Arc::new(UserService::new(user_repo));
     let state = AppState { user_service };
