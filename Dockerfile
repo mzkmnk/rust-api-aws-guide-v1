@@ -2,6 +2,7 @@ FROM rust:1.88 AS builder
 WORKDIR /app
 
 COPY Cargo.toml Cargo.lock ./
+COPY migrations ./migrations
 RUN mkdir src && echo "fn main() {}" > src/main.rs && cargo build --release
 RUN rm -rf src
 
