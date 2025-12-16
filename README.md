@@ -41,7 +41,10 @@ aws cloudformation deploy \
 aws cloudformation deploy \
   --stack-name rust-api-aws-guide-v1-user-api-alb \
   --template-file cloudformation/alb.yml \
-  --parameter-overrides CertificateArn=<your-certificate-arn> \
+  --parameter-overrides \
+    CertificateArn=<your-certificate-arn> \
+    HostedZoneId=<your-hosted-zone-id> \
+    DomainName=<your-domain-name> \
   --region ap-northeast-1
 ```
 

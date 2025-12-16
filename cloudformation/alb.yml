@@ -7,6 +7,10 @@ Parameters:
     Default: user-api
   CertificateArn:
     Type: String
+  HostedZoneId:
+    Type: String
+  DomainName:
+    Type: String
 
 Outputs:
   TargetGroupArn:
@@ -60,3 +64,14 @@ Resources:
       DefaultActions:
         - Type: forward
           TargetGroupArn: !Ref TargetGroup
+
+  # Dns Record
+  DnsRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref DomainName
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt ALB.DNSName
+        HostedZoneId: !GetAtt ALB.CanonicalHostedZoneID
