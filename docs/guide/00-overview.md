@@ -1,4 +1,4 @@
-# 2 日で学べる Rust の API 設計とアーキテクチャ
+# 3 日で学べる Rust の API 設計とアーキテクチャ
 
 ## AWS デプロイ実践ガイド
 
@@ -12,16 +12,19 @@
 - フロントエンド経験者でバックエンド学習中の方
 - 実践的なAPI開発を学びたい方
 
-**想定学習時間**: 総合 5 時間
+**想定学習時間**: 総合 7.5 時間
 
 - **Day 1**: 設計原則と API 実装（2.5 時間）
 - **Day 2**: アーキテクチャと AWS デプロイ（2.5 時間）
+- **Day 3**: 機能拡張と本番運用（2.5 時間）
 
 **最終成果物**: AWS にデプロイされた Rust REST API
 
 - ECS Fargate 上で実行
 - RDS で永続化
 - API Gateway で公開
+- JWT 認証で保護
+- CI/CD で自動デプロイ
 
 ---
 
@@ -60,4 +63,8 @@ flowchart TB
 | [05-day2-session2-docker.md](./05-day2-session2-docker.md)                     | Day2 セッション 2: Docker コンテナ化          |
 | [06-day2-session3-ecs-deploy.md](./06-day2-session3-ecs-deploy.md)             | Day2 セッション 3: AWS ECS/Fargate デプロイ   |
 | [07-day2-session4-monitoring.md](./07-day2-session4-monitoring.md)             | Day2 セッション 4: デプロイ検証と監視         |
-| [08-reference.md](./08-reference.md)                                           | 実装リファレンス・CI/CD・チェックリスト       |
+| [08-reference.md](./08-reference.md)                                           | 実装リファレンス・チェックリスト              |
+| [09-day3-session1-update.md](./09-day3-session1-update.md)                     | Day3 セッション 1: Update 機能の追加          |
+| [10-day3-session2-auth.md](./10-day3-session2-auth.md)                         | Day3 セッション 2: JWT 認証の実装             |
+| [11-day3-session3-cicd.md](./11-day3-session3-cicd.md)                         | Day3 セッション 3: GitHub Actions CI/CD       |
+| [12-day3-session4-api-gateway.md](./12-day3-session4-api-gateway.md)           | Day3 セッション 4: API Gateway の追加         |
