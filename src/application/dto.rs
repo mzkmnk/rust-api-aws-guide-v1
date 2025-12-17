@@ -6,6 +6,12 @@ pub struct CreateUserRequest {
     pub email: String,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct UpdateUserRequest {
+    pub name: Option<String>,
+    pub email: Option<String>,
+}
+
 #[derive(Debug, Serialize)]
 pub struct UserResponse {
     pub id: i32,
