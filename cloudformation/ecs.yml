@@ -12,6 +12,24 @@ Parameters:
     Type: String
     NoEcho: true
 
+Outputs:
+  EcsServiceArn:
+    Value: !Ref EcsService
+    Export:
+      Name: !Sub ${ProjectName}-EcsServiceArn
+  EcsServiceName:
+    Value: !GetAtt EcsService.Name
+    Export:
+      Name: !Sub ${ProjectName}-EcsServiceName
+  TaskExecutionRoleArn:
+    Value: !GetAtt TaskExecutionRole.Arn
+    Export:
+      Name: !Sub ${ProjectName}-TaskExecutionRoleArn
+  EcsClusterName:
+    Value: !Ref EcsCluster
+    Export:
+      Name: !Sub ${ProjectName}-EcsClusterName
+
 Resources:
   EcsCluster:
     Type: AWS::ECS::Cluster
