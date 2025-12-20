@@ -220,5 +220,6 @@ Resources:
                   Fn::Sub: ${ProjectName}-EcsClusterName
                 ServiceName: !ImportValue
                   Fn::Sub: ${ProjectName}-EcsServiceName
+                FileName: imagedefinitions.json
               InputArtifacts:
                 - Name: BuildArtifact
