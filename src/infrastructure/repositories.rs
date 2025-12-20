@@ -6,7 +6,12 @@ use crate::domain::user::User;
 #[async_trait]
 pub trait UserRepository: Send + Sync {
     async fn save(&self, user: User) -> Result<User, sqlx::Error>;
-    async fn update(&self, user: User) -> Result<User, sqlx::Error>;
+    async fn update(
+        &self,
+        id: i32,
+        name: Option<String>,
+        email: Option<String>,
+    ) -> Result<User, sqlx::Error>;
     async fn find_by_id(&self, id: i32) -> Result<Option<User>, sqlx::Error>;
     async fn find_all(&self) -> Result<Vec<User>, sqlx::Error>;
     async fn delete(&self, id: i32) -> Result<(), sqlx::Error>;
@@ -40,7 +45,12 @@ impl UserRepository for PostgresUserRepository {
         Ok(user.with_id(row.0))
     }
 
-    async fn update(&self, user: User) -> Result<User, sqlx::Error> {
+    async fn update(
+        &self,
+        id: i32,
+        name: Option<String>,
+        email: Option<String>,
+    ) -> Result<User, sqlx::Error> {
         let user = sqlx::query_as::<_, User>(
             r#"
             UPDATE users 
@@ -48,9 +58,9 @@ impl UserRepository for PostgresUserRepository {
             WHERE id = $3
             "#,
         )
-        .bind(&user.name)
-        .bind(&user.email)
-        .bind(user.id)
+        .bind(&name)
+        .bind(&email)
+        .bind(id)
         .fetch_one(&self.pool)
         .await?;
 
