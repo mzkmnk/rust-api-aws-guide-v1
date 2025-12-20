@@ -59,6 +59,15 @@ aws cloudformation deploy \
   --region ap-northeast-1
 ```
 
+### 6. CICD Stack
+```bash
+aws cloudformation deploy \
+  --stack-name rust-api-aws-guide-v1-user-api-cicd \
+  --template-file cloudformation/cicd.yml \
+  --capabilities CAPABILITY_IAM \
+  --region ap-northeast-1
+```
+
 ## 削除手順（逆順）
 
 ```bash
