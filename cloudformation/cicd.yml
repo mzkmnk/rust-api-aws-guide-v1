@@ -1,0 +1,227 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: CI/CD Pipeline for USER API
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: user-api
+
+  GitHubBranch:
+    Type: String
+    Default: main
+
+Resources:
+  ArtifactBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${ProjectName}-artifact-${AWS::AccountId}
+      # encryption
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      # block public access
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteOldArtifacts
+            Status: Enabled
+            ExpirationInDays: 30
+
+  GitHubConnection:
+    Type: AWS::CodeStarConnections::Connection
+    Properties:
+      ConnectionName: !Sub ${ProjectName}-github
+      ProviderType: GitHub
+
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: !Sub ${ProjectName}-CodeBuildPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              # ecr
+              - Effect: Allow
+                Action:
+                  - ecr:GetAuthorizationToken
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:PutImage
+                  - ecr:InitiateLayerUpload
+                  - ecr:UploadLayerPart
+                  - ecr:CompleteLayerUpload
+                Resource: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ProjectName}
+              # s3
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                Resource: !Sub ${ArtifactBucket.Arn}/*
+              # cloudwatch log
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/${ProjectName}*
+
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub ${ProjectName}-codebuild
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: buildspec.yml
+
+      Artifacts:
+        Type: CODEPIPELINE
+
+      Environment:
+        Type: ARM_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/amazonlinux2-aarch64-standard:3.0
+        PrivilegedMode: true
+        EnvironmentVariables:
+          - Name: AWS_ACCOUNT_ID
+            Value: !Ref AWS::AccountId
+          - Name: AWS_REGION
+            Value: !Ref AWS::Region
+          - Name: ECR_REPOSITORY
+            Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ProjectName}
+
+  PipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: !Sub ${ProjectName}-PipelinePolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              # s3
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                Resource: !Sub ${ArtifactBucket.Arn}/*
+              # codestar connection
+              - Effect: Allow
+                Action:
+                  - codestar-connections:useConnection
+                Resource: !Ref GitHubConnection
+              # codebuild
+              - Effect: Allow
+                Action:
+                  - codebuild:StartBuild
+                  - codebuild:BatchGetBuilds
+                Resource: !GetAtt CodeBuildProject.Arn
+              # ecs deploy
+              - Effect: Allow
+                Action:
+                  - ecs:RegisterTaskDefinition
+                  - ecs:DescribeTaskDefinition
+                  - ecs:ListTasks
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - ecs:DescribeServices
+                  - ecs:UpdateService
+                Resource: !ImportValue
+                  Fn::Sub: ${ProjectName}-EcsServiceArn
+              - Effect: Allow
+                Action:
+                  - ecs:DescribeTasks
+                Resource: !Sub
+                  - arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:task/${ClusterName}/*
+                  - ClusterName: !ImportValue
+                      Fn::Sub: ${ProjectName}-EcsClusterName
+              # iam passrole
+              - Effect: Allow
+                Action:
+                  - iam:PassRole
+                Resource: !ImportValue
+                  Fn::Sub: ${ProjectName}-TaskExecutionRoleArn
+                Condition:
+                  StringEqualsIfExists:
+                    iam:PassedToService: ecs-tasks.amazonaws.com
+
+  Pipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt PipelineRole.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref ArtifactBucket
+      Stages:
+        # Source Stage
+        - Name: Source
+          Actions:
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Provider: CodeStarSourceConnection
+                Owner: AWS
+                Version: "1"
+              Configuration:
+                ConnectionArn: !Ref GitHubConnection
+                FullRepositoryId: mzkmnk/rust-api-aws-guide-v1
+                BranchName: !Ref GitHubBranch
+              OutputArtifacts:
+                - Name: SourceArtifact
+        # Build Stage
+        - Name: Build
+          Actions:
+            - Name: Build
+              ActionTypeId:
+                Category: Build
+                Provider: CodeBuild
+                Owner: AWS
+                Version: "1"
+              Configuration:
+                ProjectName: !Ref CodeBuildProject
+              InputArtifacts:
+                - Name: SourceArtifact
+              OutputArtifacts:
+                - Name: BuildArtifact
+        # Deploy Stage
+        - Name: Deploy
+          Actions:
+            - Name: Deploy
+              ActionTypeId:
+                Category: Deploy
+                Provider: ECS
+                Owner: AWS
+                Version: "1"
+              Configuration:
+                ClusterName: !ImportValue
+                  Fn::Sub: ${ProjectName}-EcsClusterName
+                ServiceName: !ImportValue
+                  Fn::Sub: ${ProjectName}-EcsServiceName
+                FileName: imagedefinitions.json
+              InputArtifacts:
+                - Name: BuildArtifact
