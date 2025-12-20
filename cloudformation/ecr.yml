@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Description: ECR Repository for User API
 
 Parameters:
@@ -17,6 +17,13 @@ Resources:
     Type: AWS::ECR::Repository
     Properties:
       RepositoryName: !Ref ProjectName
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-ecr
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: ManagedBy
+          Value: CloudFormation
       LifecyclePolicy:
         LifecyclePolicyText: |
           {
