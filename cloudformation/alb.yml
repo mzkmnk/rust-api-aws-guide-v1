@@ -28,6 +28,13 @@ Resources:
       Name: !Sub ${ProjectName}-alb
       Scheme: internet-facing
       Type: application
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-alb
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: ManagedBy
+          Value: CloudFormation
       Subnets:
         - !ImportValue
           Fn::Sub: ${ProjectName}-PublicSubnet1Id
@@ -51,6 +58,13 @@ Resources:
       HealthCheckIntervalSeconds: 30
       HealthyThresholdCount: 2
       UnhealthyThresholdCount: 3
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-tg
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: ManagedBy
+          Value: CloudFormation
 
   # Listener (HTTPS)
   Listener:

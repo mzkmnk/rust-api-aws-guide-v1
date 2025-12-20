@@ -35,6 +35,13 @@ Resources:
     Type: AWS::ECS::Cluster
     Properties:
       ClusterName: !Sub ${ProjectName}-cluster
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-cluster
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: ManagedBy
+          Value: CloudFormation
 
   TaskExecutionRole:
     Type: AWS::IAM::Role
@@ -46,6 +53,13 @@ Resources:
             Principal:
               Service: ecs-tasks.amazonaws.com
             Action: sts:AssumeRole
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-task-execution-role
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: ManagedBy
+          Value: CloudFormation
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
       Policies:
@@ -74,6 +88,13 @@ Resources:
       RuntimePlatform:
         CpuArchitecture: ARM64
         OperatingSystemFamily: LINUX
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-task
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: ManagedBy
+          Value: CloudFormation
       ContainerDefinitions:
         - Name: !Ref ProjectName
           Image: !Sub
@@ -106,6 +127,13 @@ Resources:
       TaskDefinition: !Ref TaskDefinition
       DesiredCount: 1
       LaunchType: FARGATE
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-service
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: ManagedBy
+          Value: CloudFormation
       NetworkConfiguration:
         AwsvpcConfiguration:
           AssignPublicIp: DISABLED

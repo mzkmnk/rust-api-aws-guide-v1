@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Description: RDS PostgreSQL for User API
 
 Parameters:
@@ -21,12 +21,19 @@ Resources:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
       DBSubnetGroupDescription: Subnet group for RDS
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-db-subnet-group
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: ManagedBy
+          Value: CloudFormation
       SubnetIds:
         - !ImportValue
           Fn::Sub: ${ProjectName}-PrivateSubnet1Id
         - !ImportValue
           Fn::Sub: ${ProjectName}-PrivateSubnet2Id
-  
+
   RdsInstance:
     Type: AWS::RDS::DBInstance
     DeletionPolicy: Delete
@@ -34,13 +41,20 @@ Resources:
       DBInstanceIdentifier: !Sub ${ProjectName}-db
       DBInstanceClass: db.t4g.micro
       Engine: postgres
-      EngineVersion: '15'
+      EngineVersion: "15"
       MasterUsername: postgres
       MasterUserPassword: !Ref DBPassword
       DBName: userdb
       AllocatedStorage: 20
       StorageType: gp2
       PubliclyAccessible: false
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-db
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: ManagedBy
+          Value: CloudFormation
       VPCSecurityGroups:
         - !ImportValue
           Fn::Sub: ${ProjectName}-RdsSecurityGroupId

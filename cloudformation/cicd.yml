@@ -15,6 +15,13 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub ${ProjectName}-artifact-${AWS::AccountId}
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-artifact-bucket
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: ManagedBy
+          Value: CloudFormation
       # encryption
       BucketEncryption:
         ServerSideEncryptionConfiguration:
@@ -37,6 +44,13 @@ Resources:
     Properties:
       ConnectionName: !Sub ${ProjectName}-github
       ProviderType: GitHub
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-github-connection
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: ManagedBy
+          Value: CloudFormation
 
   CodeBuildRole:
     Type: AWS::IAM::Role
@@ -48,6 +62,13 @@ Resources:
             Principal:
               Service: codebuild.amazonaws.com
             Action: sts:AssumeRole
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-codebuild-role
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: ManagedBy
+          Value: CloudFormation
       Policies:
         - PolicyName: !Sub ${ProjectName}-CodeBuildPolicy
           PolicyDocument:
@@ -87,6 +108,13 @@ Resources:
     Properties:
       Name: !Sub ${ProjectName}-codebuild
       ServiceRole: !GetAtt CodeBuildRole.Arn
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-codebuild
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: ManagedBy
+          Value: CloudFormation
 
       Source:
         Type: CODEPIPELINE
@@ -118,6 +146,13 @@ Resources:
             Principal:
               Service: codepipeline.amazonaws.com
             Action: sts:AssumeRole
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-pipeline-role
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: ManagedBy
+          Value: CloudFormation
       Policies:
         - PolicyName: !Sub ${ProjectName}-PipelinePolicy
           PolicyDocument:
@@ -174,6 +209,13 @@ Resources:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-pipeline
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: ManagedBy
+          Value: CloudFormation
       ArtifactStore:
         Type: S3
         Location: !Ref ArtifactBucket
