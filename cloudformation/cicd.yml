@@ -179,8 +179,18 @@ Resources:
               - Effect: Allow
                 Action:
                   - ecs:RegisterTaskDefinition
+                Resource: !Sub arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:task-definition/${ProjectName}-task:*
+              - Effect: Allow
+                Action:
                   - ecs:DescribeTaskDefinition
+                Resource: "*"
+              - Effect: Allow
+                Action:
                   - ecs:ListTasks
+                Resource: !Sub arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:cluster/${ProjectName}-cluster
+              - Effect: Allow
+                Action:
+                  - ecs:TagResource
                 Resource: "*"
               - Effect: Allow
                 Action:
