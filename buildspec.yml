@@ -18,8 +18,8 @@ phases:
       - echo Pushing the Docker image...
       - docker push $ECR_REPOSITORY:$CODEBUILD_RESOLVED_SOURCE_VERSION
       - docker push $ECR_REPOSITORY:latest
-      - echo Writing image difinitions file...
-      - printf '[{"name": "user-api", "imageUri": "%s"}]' $ECR_REPOSITORY:$CODEBUILD_RESOLVED_SOURCE_VERSION > imagedefinitions.json
+      - echo Writing image definitions file...
+      - printf '[{"name":"user-api","imageUri":"%s"}]' $ECR_REPOSITORY:$CODEBUILD_RESOLVED_SOURCE_VERSION > imagedefinitions.json
 
 artifacts:
   files:
