@@ -1,0 +1,26 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region ap-northeast-1 | docker login --username AWS --password-stdin $ECR_REPOSITORY
+
+  build:
+    commands:
+      - echo Build Started On `date`
+      - echo Building the Docker image...
+      - docker build -t $ECR_REPOSITORY:$CODEBUILD_RESOLVED_SOURCE_VERSION .
+      - docker tag $ECR_REPOSITORY:$CODEBUILD_RESOLVED_SOURCE_VERSION $ECR_REPOSITORY:latest
+  
+  post_build:
+    commands:
+      - echo Pushing the Docker image...
+      - docker push $ECR_REPOSITORY:$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - docker push $ECR_REPOSITORY:latest
+      - echo Writing image difinitions file...
+      - printf '[{"name": "user-api", "imageUri": "%s"}]' $ECR_REPOSITORY:$CODEBUILD_RESOLVED_SOURCE_VERSION > imagedefinitions.json
+
+artifacts:
+  files:
+    - imagedefinitions.json
